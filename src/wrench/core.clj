@@ -30,8 +30,18 @@
        ")"))
 
 (defn location-str [location]
-  (str (.sourcePath location) " : " (.lineNumber location)
+  (str (.sourcePath location) ":" (.lineNumber location)
        " # " (-> location .method method-str)))
+
+(defn step-event-my-str [step-event]
+  (-> step-event .location location-str))
+
+(defn step-event-str [step-event]
+  (let [loc (.location step-event)
+        frame (-> step-event .thread (.frame 0))
+        package-and-class (->> frame .toString (re-seq #"^[^:]+") first)]
+    (format "%s.%s(%s:%d)"
+            package-and-class (-> loc .method .name) (.sourceName loc) (.lineNumber loc))))
 
 (defn step-request [thread]
   (-> thread .virtualMachine .eventRequestManager
@@ -48,14 +58,14 @@
 
 (def vms (atom []))
 (def current-event-set (atom nil))
+(def thread-writers (atom {}))
 
-(defn boring-thread? [thread]
-  (not (#{"main"} (.name thread))))
-
-(defn boring-location? [location]
-  #_(let [source-path (.sourcePath location)]
-    (or (. source-path startsWith "java/")
-        (. source-path startsWith "sun/"))))
+(defn get-thread-writer [thread]
+  (or ; *out*
+      (-> thread-writers
+          (swap! update thread #(or % (delay (io/writer (filename-for-thread thread)))))
+          (get thread)
+          force)))
 
 (defprotocol EventHandling
   (on-event [this]))
@@ -66,9 +76,10 @@
 
 (extend-type StepEvent EventHandling
   (on-event [this]
-    (let [loc (.location this)]
-      (if-not (boring-location? loc)
-        (-> loc location-str println)))
+    (let [w (get-thread-writer (.thread this))]
+      (.write w (step-event-str this))
+      ;(.write w (step-event-my-str this))
+      (.write w "\n"))
     (-> this .virtualMachine .resume)))
 
 (defn on-event-set [event-set]
@@ -77,18 +88,18 @@
     (on-event e)))
 
 (def listeners-should-be-running (atom true))
-;; (swap! listeners-should-be-running not)
 
 (defn event-handler-loop [vm]
-  (println "Starting event handler loop")
   (while @listeners-should-be-running
-    (-> vm .eventQueue (.remove 1000) on-event-set))
-  (println "Stopping event handler loop"))
+    (-> vm .eventQueue (.remove 100) on-event-set))
+  (doseq [[thread writer] @thread-writers]
+    (.close @writer)))
 
 (defn start-event-listener [vm]
   (doto (Thread. #(event-handler-loop vm)) .start))
 
 (defn start-recording [vm]
+  (println "Starting recording")
   (.suspend vm)
   (thread-start-request vm)
   (doseq [thread (.allThreads vm)]
@@ -103,12 +114,12 @@
     (doseq [request (concat (-> em .stepRequests seq)
                             (-> em .threadStartRequests seq))]
       (.deleteEventRequest em request)))
-  (Thread/sleep 1000))
+  (println "Recording stopped"))
 
 (defn -main [& args]
   (let [vm (socket-attach nil "5005")]
     (swap! vms conj vm)
     (start-recording vm)
-    (->> vm .allThreads (map filename-for-thread) println)
+    (println "Press [Enter] to stop recording")
     (read-line)
     (stop-recording vm)))
