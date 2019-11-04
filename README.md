@@ -44,7 +44,7 @@ Just make two recordings and use `diff` command or a gui diffing tool like [Meld
 ### Navigating recordings in Intellij IDEA
 
 Traces are recorded in the same format as java stacktraces, so you can navigate them using
-`Analyze -> Analyze Stack Trace or Thread Dump` command in IDEA. Thanks to @badgersow for the idea!
+`Analyze -> Analyze Stack Trace or Thread Dump` command in IDEA. Thanks to [@badgersow](https://github.com/badgersow) for the idea!
 
 ## Options
 
