@@ -57,7 +57,7 @@
       (doto .enable)))
 
 (defn filename-for-thread [t]
-  (str @recording-dir "/" (.name t) "__"(.uniqueID t) ".threadlog"))
+  (str @recording-dir "/" (.name t) "__"(.uniqueID t) ".txt"))
 
 (def vms (atom []))
 (def current-event-set (atom nil))
