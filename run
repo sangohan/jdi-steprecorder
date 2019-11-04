@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+# echo ":run" "$@" > /dev/stderr
+
+cd "$(dirname "$(realpath "$0")")"
+export RUN_ROOT="scripts"
+
+#
+# This is a central runner for project-related commands.
+# It is meant to be used for development tasks, for tests,
+# for deployment and everything else.
+#
+# It provides command autocompletion, which can be installed
+# via `eval "$(./run compinstall)"`.
+#
+# Commands are defined as $RUN_ROOT/command-name/run scripts, with
+# additional files that script needs in $RUN_ROOT/command-name/,
+# which is available in the run script as $RUN_CMD_DIR.
+# Scripts are guaranteed to be called from the repo toplevel, so
+# you don't need to dance with $0/realpath/dirname/cd, simply
+# use paths from the repo root.
+#
+
+cmd="$1"; shift
+
+function die {
+    echo "$@" && exit 255
+}
+
+function run-cmd-dir {
+  echo "$RUN_ROOT/$1"
+}
+
+function exec-run-cmd {
+  export RUN_CMD_NAME="$1"; shift
+  export RUN_CMD_DIR="$(run-cmd-dir "$RUN_CMD_NAME")"
+  cmd_run_file="$RUN_CMD_DIR/run"
+  if [ -e "$cmd_run_file" ]; then
+    # At some point you may wish to replace this with non-executable files
+    # and running them with bash (e.g. to prevent accidentally running them
+    # directly and not via run).
+    # Don't do that, as run scripts may use any language, and that's a very
+    # good property. Yes, one may write a run script that would call arbitrary
+    # interpreter on a file in a RUN_CMD_DIR, but that adds mental indirection.
+    # Plus one might genuinely want to execute run script outside run environment
+    # for debug purposes.
+    exec "$cmd_run_file" "$@"
+  else
+    die "Unknown command: $cmd"
+  fi
+}
+
+function cmd-name-with-description {
+  cmd="$1"
+  desc_file="$RUN_ROOT/$cmd/desc"
+  format="%-15s - %s\n"
+  if [ "$cmd" = "help" ]; then
+    printf "$format" "$cmd" "Display help for a command"
+  elif [ -e "$desc_file" ]; then
+    printf "$format" "$cmd" "$(cat "$desc_file"|head -1)"
+  else
+    echo "$cmd"
+  fi
+}
+
+function raw-commands-list {
+  (echo help; ls -1 "$RUN_ROOT")|sort
+}
+
+function complete-cmd-list {
+  compgen -W "$(raw-commands-list)" "$1"
+}
+
+function pretty-commands-list {
+  echo
+  echo "  Available commands:"
+  echo
+  for cmd in $(raw-commands-list); do
+    echo -n "  * "; cmd-name-with-description "$cmd"
+  done
+  echo
+  echo "Use ./run help <command name> to see docs for that command"
+  echo
+}
+
+function show-help {
+  cmd="$1"
+  desc_file="$RUN_ROOT/$cmd/desc"
+  [ -n "$cmd" ] || die "Usage: ./run help <command name>"
+  [ -e "$desc_file" ] || die "No help found for command $cmd"
+  echo "Showing help for: $cmd"
+  echo
+  cat "$desc_file"
+}
+
+function exec-complete-cmd {
+  export RUN_CMD_NAME="$1"; shift
+  export RUN_CMD_DIR="$(run-cmd-dir "$RUN_CMD_NAME")"
+  export COMP_CWORD="$1"; shift
+  cmd_comp_file="$RUN_CMD_DIR/compgen"
+  if [ -e "$cmd_comp_file" ]; then
+    exec "$cmd_comp_file" "$@"
+  fi
+}
+
+function compinstall {
+  cat <<'EOF'
+_run_completions()
+{
+  [ -f run -a -x run ] || return
+  if [ "$COMP_CWORD" = 1 ] || [ "$COMP_CWORD" = 2 -a "${COMP_WORDS[1]}" = "help" ]; then
+    COMPREPLY=($(./run complete-cmd-list "${COMP_WORDS[$COMP_CWORD]}"))
+  elif [ "$COMP_CWORD" -gt 1 ]; then
+    CMD="${COMP_WORDS[1]}"
+    COMPREPLY=($(./run complete-cmd "$CMD" "$(($COMP_CWORD - 1))" "${COMP_WORDS[@]:2}"))
+  fi
+}
+
+complete -F _run_completions run
+EOF
+}
+
+case "$cmd" in
+  ""|"-h"|"--help") pretty-commands-list ;;
+  "help") show-help "$@" ;;
+  "complete-cmd-list") complete-cmd-list "$@" ;;
+  "complete-cmd") exec-complete-cmd "$@" ;;
+  "run-cmd-dir") run-cmd-dir "$@" ;;
+  "compinstall") compinstall ;;
+  *) exec-run-cmd "$cmd" "$@" ;;
+esac

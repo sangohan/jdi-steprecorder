@@ -8,4 +8,5 @@
   :plugins [[lein-jdk-tools "0.1.1"]]
   :main ^:skip-aot wrench.core
   :target-path "target/%s"
+  :uberjar-name "wrench-standalone.jar"
   :profiles {:uberjar {:aot :all}})
