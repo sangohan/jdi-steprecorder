@@ -131,7 +131,7 @@
    ["-d" "--dir DIRECTORY" "Directory to place thread recordings"
     :default "."
     :default-desc "Current directory"]
-   ["-h" "--help"]])
+   ["-h" "--help" "Display help and exit"]])
 
 (defn run [options]
   (let [{:keys [host port dir]} options]

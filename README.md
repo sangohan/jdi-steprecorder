@@ -41,7 +41,7 @@ Just make two recordings and use `diff` command or a gui diffing tool like [Meld
   -p, --port PORT      5005               Port number
   -H, --host HOST      localhost          Hostname
   -d, --dir DIRECTORY  Current directory  Directory to place thread traces
-  -h, --help
+  -h, --help                              Display help and exit
 ```
 
 ## TODO
