@@ -69,8 +69,6 @@ Install leiningen and run
 
     $ ./run build
 
-...
-
 ## License
 
 Copyright © 2019 Ales Huzik
