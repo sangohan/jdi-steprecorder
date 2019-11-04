@@ -13,7 +13,10 @@ corresponding thread names. This allows you to
 
 ## Installation
 
-Download from http://github.com/alesguzik/jdi-steprecorder .
+1. Find the [latest release](https://github.com/alesguzik/jdi-steprecorder/releases/latest) on github
+2. Download `jdi-steprecorder`
+3. Make it executable: `chmod +x jdi-steprecorder`
+4. Move it somewhere on your PATH: `mv "$HOME/Downloads/jdi-steprecorder" ~/.local/bin/jdi-steprecorder`
 
 ## Usage
 
