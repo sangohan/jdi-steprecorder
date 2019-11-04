@@ -1,4 +1,7 @@
 #!/bin/sh
+
+# Git revision: GIT_REVISION_PLACEHOLDER
+
 MYSELF=`which "$0" 2>/dev/null`
 [ $? -gt 0 -a -f "$0" ] && MYSELF="./$0"
 java=java

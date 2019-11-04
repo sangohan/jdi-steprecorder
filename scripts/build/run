@@ -3,6 +3,8 @@ set -e
 lein clean
 lein uberjar
 result=target/jdi-steprecorder
-cat dev-resources/stub.sh target/uberjar/steprecorder-standalone.jar > "$result"
+cat dev-resources/stub.sh > "$result"
+sed -i "$result" -e "s|GIT_REVISION_PLACEHOLDER|$(git rev-parse HEAD) ($(git rev-parse --abbrev-ref HEAD))|"
+cat target/uberjar/steprecorder-standalone.jar >> "$result"
 chmod +x "$result"
 echo "Created $(realpath "$result")"
