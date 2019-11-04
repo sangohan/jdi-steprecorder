@@ -2,5 +2,7 @@
 set -e
 lein clean
 lein uberjar
-cat dev-resources/stub.sh target/uberjar/steprecorder-standalone.jar > target/jdi-steprecorder
-chmod +x target/jdi-steprecorder
+result=target/jdi-steprecorder
+cat dev-resources/stub.sh target/uberjar/steprecorder-standalone.jar > "$result"
+chmod +x "$result"
+echo "Created $(realpath "$result")"
