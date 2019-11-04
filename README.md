@@ -1,36 +1,66 @@
-# wrench
+# jdi-steprecorder
 
-FIXME: description
+JDI Steprecorder is a tool that connects to a JVM via Java Debug Interface and records
+execution of threads (including new threads) line by line into files with
+corresponding thread names. This allows you to
+
+1. Record multiple executions of your code (e.g. one in a configuration that causes a bug and one in a configuration that doesn't) and diff them
+2. Study what the code is actually doing
+3. Find good spots to put breakpoints for debugging in your IDE
+4. Calculate statistics to see which lines of code are executed most often
+5. Finally see the time dimension of your program, that is usually implicit in imperative code.
 
 ## Installation
 
-Download from http://example.com/FIXME.
+Download from http://github.com/alesguzik/jdi-steprecorder .
 
 ## Usage
 
-FIXME: explanation
+### Make the recording
 
-    $ java -jar wrench-0.1.0-standalone.jar [args]
+1. Run your app with something like `-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005`.
+2. Run `jdi-steprecorder` to start the recording.
+3. Press [Enter] to stop the recording.
+
+### Filter out calls to the standard library
+
+You may want to hide steps happening inside the standard library. This will make traces shorter
+and easier to read and compare.
+
+    $ cat main__4.trace | grep -v -E "^(java|sun)\." | uniq > main__4.nostdlib.trace
+
+### Comparing recordings
+
+Just make two recordings and use `diff` command or a gui diffing tool like [Meld](https://meldmerge.org/).
 
 ## Options
 
-FIXME: listing of options this app accepts.
+```
+  Option               Default            Description
+---------------------  -----------------  --------------------------------
+  -p, --port PORT      5005               Port number
+  -H, --host HOST      localhost          Hostname
+  -d, --dir DIRECTORY  Current directory  Directory to place thread traces
+  -h, --help
+```
 
-## Examples
+## TODO
+
+- [ ] prefiltering of the steprecord output with whitelists and blacklists
+- [ ] alternative output formats
+- [ ] `lldb-steprecorder` for working with C, C++, Rust and the like.
+
+## Building from source
+
+Install leiningen and run
+
+    $ ./run build
 
 ...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
 
 ## License
 
-Copyright © 2019 FIXME
+Copyright © 2019 Ales Huzik
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
