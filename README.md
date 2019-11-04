@@ -7,8 +7,9 @@ corresponding thread names. This allows you to
 1. Record multiple executions of your code (e.g. one in a configuration that causes a bug and one in a configuration that doesn't) and diff them
 2. Study what the code is actually doing
 3. Find good spots to put breakpoints for debugging in your IDE
-4. Calculate statistics to see which lines of code are executed most often
-5. Finally see the time dimension of your program, that is usually implicit in imperative code.
+4. Compare how some functionality behaves across different versions of your program. This should help to narrow down the search scope for regressions.
+5. Calculate statistics to see which lines of code are executed most often
+6. Finally see the time dimension of your program, that is usually implicit in imperative code.
 
 ## Installation
 
@@ -16,18 +17,22 @@ Download from http://github.com/alesguzik/jdi-steprecorder .
 
 ## Usage
 
-### Make the recording
+### Recording
 
 1. Run your app with something like `-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005`.
 2. Run `jdi-steprecorder` to start the recording.
 3. Press [Enter] to stop the recording.
 
-### Filter out calls to the standard library
+### Filtering out calls to the standard library
 
 You may want to hide steps happening inside the standard library. This will make traces shorter
 and easier to read and compare.
 
     $ cat main__4.trace | grep -v -E "^(java|sun)\." | uniq > main__4.nostdlib.trace
+
+### Find lines that has been executed the most number of times.
+
+    $ cat main__4.trace |sort|uniq -c|sort -nr|head -n 20
 
 ### Comparing recordings
 
