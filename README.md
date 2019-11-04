@@ -51,9 +51,9 @@ Just make two recordings and use `diff` command or a gui diffing tool like [Meld
 
 ## TODO
 
-- [ ] prefiltering of the steprecord output with whitelists and blacklists
 - [ ] alternative output formats
-- [ ] `lldb-steprecorder` for working with C, C++, Rust and the like.
+- [ ] display the code of the lines
+- [ ] Write `lldb-steprecorder` for working with C, C++, Rust and the like.
 
 ## Building from source
 
