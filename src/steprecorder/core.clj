@@ -141,11 +141,11 @@
         (read-line)
         (stop-recording vm))
       (catch java.net.ConnectException e
-        (printf "Error: Cannot connect to %s:%s\n" host port)))))
+        (-> "Error: Cannot connect to %s:%s" (format host port) println)))))
 
 (defn -main [& args]
   (let [{:keys [options arguments errors summary]} (cli/parse-opts args cli-options)]
     (cond
-      (:help options) (printf "\nUsage:\n%s\n\n" summary)
+      (:help options) (-> "\nUsage:\n%s\n"  (format summary) println)
       errors (->> errors (string/join "\n * ") (println "Errors:\n * "))
       :else (run options))))
