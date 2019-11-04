@@ -1,5 +1,6 @@
 (ns wrench.core
   (:require
+   [clojure.tools.cli :as cli]
    [clojure.string :as string]
    [clojure.java.io :as io])
   (:import
@@ -7,6 +8,8 @@
    com.sun.jdi.request.StepRequest
    (com.sun.jdi.event StepEvent ThreadStartEvent MethodEntryEvent MethodExitEvent))
   (:gen-class))
+
+(def recording-dir (atom "."))
 
 (def vm-manager (Bootstrap/virtualMachineManager))
 
@@ -54,7 +57,7 @@
       (doto .enable)))
 
 (defn filename-for-thread [t]
-  (str (.name t) "__"(.uniqueID t) ".threadlog"))
+  (str @recording-dir "/" (.name t) "__"(.uniqueID t) ".threadlog"))
 
 (def vms (atom []))
 (def current-event-set (atom nil))
@@ -63,7 +66,8 @@
 (defn get-thread-writer [thread]
   (or ; *out*
       (-> thread-writers
-          (swap! update thread #(or % (delay (io/writer (filename-for-thread thread)))))
+          (swap! update thread #(or % (delay (-> (doto (filename-for-thread thread) io/make-parents)
+                                                 io/writer))))
           (get thread)
           force)))
 
@@ -116,10 +120,32 @@
       (.deleteEventRequest em request)))
   (println "Recording stopped"))
 
+(def cli-options
+  [["-p" "--port PORT" "Port number"
+    :default "5005"]
+   ["-H" "--host HOST" "Hostname"
+    :default "localhost"]
+   ["-d" "--dir DIRECTORY" "Directory to place thread recordings"
+    :default "."
+    :default-desc "Current directory"]
+   ["-h" "--help"]])
+
+(defn run [options]
+  (let [{:keys [host port dir]} options]
+    (reset! recording-dir dir)
+    (try
+      (let [vm (socket-attach host port)]
+        (swap! vms conj vm)
+        (start-recording vm)
+        (println "Press [Enter] to stop recording")
+        (read-line)
+        (stop-recording vm))
+      (catch java.net.ConnectException e
+        (printf "Error: Cannot connect to %s:%s\n" host port)))))
+
 (defn -main [& args]
-  (let [vm (socket-attach nil "5005")]
-    (swap! vms conj vm)
-    (start-recording vm)
-    (println "Press [Enter] to stop recording")
-    (read-line)
-    (stop-recording vm)))
+  (let [{:keys [options arguments errors summary]} (cli/parse-opts args cli-options)]
+    (cond
+      (:help options) (printf "\nUsage:\n%s\n\n" summary)
+      errors (->> errors (string/join "\n * ") (println "Errors:\n * "))
+      :else (run options))))
