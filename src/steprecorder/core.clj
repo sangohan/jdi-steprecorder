@@ -66,8 +66,11 @@
 (defn get-thread-writer [thread]
   (or ; *out*
       (-> thread-writers
-          (swap! update thread #(or % (delay (-> (doto (filename-for-thread thread) io/make-parents)
-                                                 io/writer))))
+          (swap! update thread #(or % (delay
+                                        (let [filename (filename-for-thread thread)]
+                                          (io/make-parents filename)
+                                          (println "Writing to" filename)
+                                          (io/writer filename)))))
           (get thread)
           force)))
 
