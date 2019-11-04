@@ -2,5 +2,5 @@
 set -e
 lein clean
 lein uberjar
-cat dev-resources/stub.sh target/uberjar/wrench-standalone.jar > target/wrench.run
-chmod +x target/wrench.run
+cat dev-resources/stub.sh target/uberjar/steprecorder-standalone.jar > target/jdi-steprecorder
+chmod +x target/jdi-steprecorder

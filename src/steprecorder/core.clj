@@ -1,4 +1,4 @@
-(ns wrench.core
+(ns steprecorder.core
   (:require
    [clojure.tools.cli :as cli]
    [clojure.string :as string]
